@@ -67,6 +67,9 @@ module AWS
           memoized :canonical_string
     
           def encoded_canonical
+            puts "CANONICAL STRING BEGIN"
+            puts canonical_string
+            puts "CANONICAL STRING ENDS"
             digest   = OpenSSL::Digest::Digest.new('sha1')
             b64_hmac = [OpenSSL::HMAC.digest(digest, secret_access_key, canonical_string)].pack("m").strip
             url_encode? ? CGI.escape(b64_hmac) : b64_hmac
@@ -208,7 +211,7 @@ module AWS
           end
           
           def extract_significant_parameter
-            request.path[/[&?](acl|torrent|logging)(?:&|=|$)/, 1]
+            request.path[/[&?](uploads|acl|torrent|logging)(?:&|=|$)/, 1]
           end
           
           def only_path

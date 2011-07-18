@@ -257,6 +257,22 @@ module AWS
         alias_method :create, :store
         alias_method :save,   :store
         
+        # Initiate a multipart store on S3 servers.
+        # Options :
+        # * `data` : a filename, or I/O stream of the data to store. If none is provided, return a non uploaded multipart upload object
+        # * `part_size` : the part of each size, must be >5MB or will be changed to 5MB otherwise
+        def multipart_store(key, options = {})
+          validate_key! key
+          bucket = options[:bucket]
+
+          path = "#{path!(key, options)}?uploads"
+          infer_content_type!(key, options)
+
+          response = post(bucket_name(bucket), path, options)
+          
+          S3MultipartUpload.new :upload_id => response.parsed['upload_id'], :key => key, :bucket => bucket
+        end
+
         # All private objects are accessible via an authenticated GET request to the S3 servers. You can generate an 
         # authenticated url for an object like this:
         #
