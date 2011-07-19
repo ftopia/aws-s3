@@ -204,11 +204,21 @@ module AWS
           end
 
           def path
-            [only_path, extract_significant_parameter].compact.join('?')
+            significant_parameters = extract_significant_parameters
+            
+            if significant_parameters.empty?
+              only_path
+            else
+              [only_path, significant_parameters.join('&')].compact.join('?')
+            end
           end
           
-          def extract_significant_parameter
-            request.path[/[&?](acl|location|logging|notification|partNumber|policy|requestPayment|torrent|uploadId|uploads|versionId|versioning|versions|website)(?:&|=|$)/, 1]
+          def extract_significant_parameters
+            parameters = request.path[/\?.*$/]
+            
+            return [] if parameters.nil? # no parameters, nothing to filter
+            
+            parameters[1..-1].split('&').select {|parameter_and_value| parameter_and_value.match(/^(acl|location|logging|notification|partNumber|policy|requestPayment|torrent|uploadId|uploads|versionId|versioning|versions|website)/) }
           end
           
           def only_path
