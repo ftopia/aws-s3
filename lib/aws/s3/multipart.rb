@@ -61,10 +61,10 @@ module AWS
     
         def build
           xml.CompleteMultipartUpload do
-            self.etags.each do |part_number, etag|
+            self.etags.keys.sort.each do |part_number|
               xml.Part do
                 xml.PartNumber  part_number
-                xml.ETag        etag
+                xml.ETag        self.etags[part_number]
               end
             end
           end
