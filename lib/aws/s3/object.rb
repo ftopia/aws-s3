@@ -263,7 +263,7 @@ module AWS
           validate_key! key
           bucket = options[:bucket]
 
-          path = "#{path!(key, options)}?uploads"
+          path = "/#{key}?uploads"
           infer_content_type!(key, options)
 
           response = post(bucket_name(bucket), path, options)
