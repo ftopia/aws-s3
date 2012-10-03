@@ -131,7 +131,7 @@ module AWS
         # === Other options
         # * <tt>:range</tt> - Return only the bytes of the object in the specified range.
         def value(key, bucket = nil, options = {}, &block)
-          Value.new(get(bucket_name(bucket), path!(key, options), options, &block))
+          Value.new(get(path!(bucket, key, options), options, &block))
         end
         
         def stream(key, bucket = nil, options = {}, &block)
@@ -181,10 +181,10 @@ module AWS
         # Makes a copy of the object with <tt>key</tt> to <tt>copy_key</tt>, preserving the ACL of the existing object if the <tt>:copy_acl</tt> option is true (default false).
         def copy(key, copy_key, bucket = nil, options = {})
           bucket          = bucket_name(bucket)
-          source_key      = path_with_bucket!(bucket, key)
+          source_key      = path!(bucket, key)
           default_options = {'x-amz-copy-source' => URI.escape(source_key)}
-          target_key      = path!(copy_key)
-          returning put(bucket, target_key, default_options) do
+          target_key      = path!(bucket, copy_key)
+          returning put(target_key, default_options) do
             acl(copy_key, bucket, acl(key, bucket)) if options[:copy_acl]
           end
         end
@@ -212,7 +212,7 @@ module AWS
         #
         # If the specified key does not exist, NoSuchKey is raised.
         def about(key, bucket = nil, options = {})
-          response = head(bucket_name(bucket), path!(key, options), options)
+          response = head(path!(bucket, key, options), options)
           raise NoSuchKey.new("No such key `#{key}'", bucket) if response.code == 404
           About.new(response.headers)
         end
@@ -232,7 +232,7 @@ module AWS
         def delete(key, bucket = nil, options = {})
           # A bit confusing. Calling super actually makes an HTTP DELETE request. The delete method is
           # defined in the Base class. It happens to have the same name.
-          super(bucket_name(bucket), path!(key, options), options).success?
+          super(path!(bucket, key, options), options).success?
         end
         
         # When storing an object on the S3 servers using S3Object.store, the <tt>data</tt> argument can be a string or an I/O stream. 
@@ -247,12 +247,10 @@ module AWS
         def store(key, data, bucket = nil, options = {})
           validate_key!(key)
           # Must build path before infering content type in case bucket is being used for options
-          path = path!(key, options)
+          path = path!(bucket, key, options)
           infer_content_type!(key, options)
           
-          # Don't call .success? on response. We want to get the etag.
-          put(bucket_name(bucket), path, options, data)
-          
+          put(path, options, data) # Don't call .success? on response. We want to get the etag.
         end
         alias_method :create, :store
         alias_method :save,   :store
@@ -318,14 +316,10 @@ module AWS
         #                    :authenticated => false)
         #   # => http://s3.amazonaws.com/marcel/beluga_baby.jpg
         def url_for(name, bucket = nil, options = {})
-          connection.url_for(bucket_name(bucket), path!(name, options), options) # Do not normalize options
+          connection.url_for(path!(bucket, name, options), options) # Do not normalize options
         end
         
-        def path!(name, options = {}) #:nodoc:
-          "/#{name}"
-        end
-        
-        def path_with_bucket!(bucket, name, options = {})
+        def path!(bucket, name, options = {}) #:nodoc:
           # We're using the second argument for options
           if bucket.is_a?(Hash)
             options.replace(bucket)

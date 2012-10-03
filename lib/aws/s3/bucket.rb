@@ -76,7 +76,7 @@ module AWS
         # in the section called 'Setting access levels'.
         def create(name, options = {})
           validate_name!(name)
-          put(nil, "/#{name}", options).success?
+          put("/#{name}", options).success?
         end
         
         # Fetches the bucket named <tt>name</tt>. 
@@ -99,7 +99,7 @@ module AWS
         # There are several options which allow you to limit which objects are retrieved. The list of object filtering options
         # are listed in the documentation for Bucket.objects.
         def find(name = nil, options = {})
-          new(get(bucket_name(name), path(name, options)).bucket)
+          new(get(path(name, options)).bucket)
         end
         
         # Return just the objects in the bucket named <tt>name</tt>.
@@ -178,7 +178,7 @@ module AWS
               options = name
               name    = nil
             end
-            "/#{RequestOptions.process(options).to_query_string}"
+            "/#{bucket_name(name)}#{RequestOptions.process(options).to_query_string}"
           end
       end
       
